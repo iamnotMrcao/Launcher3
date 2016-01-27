@@ -18,12 +18,17 @@ package com.android.launcher3;
 
 import android.app.Application;
 
+import com.android.launcher3.utils.logger.LogLevel;
+import com.android.launcher3.utils.logger.Logger;
+
 public class LauncherApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
         LauncherAppState.setApplicationContext(this);
         LauncherAppState.getInstance();
+
+        Logger.init().hideThreadInfo().setLogLevel(LogLevel.FULL);
     }
 
     @Override

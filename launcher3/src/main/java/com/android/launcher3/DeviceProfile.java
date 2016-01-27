@@ -100,8 +100,8 @@ public class DeviceProfile {
     float overviewModeIconZoneRatio;
     float overviewModeScaleFactor;
 
-    int iconSizePx;
-    int iconTextSizePx;
+    int iconSizePx;//图标大小
+    int iconTextSizePx;//图标文字大小
     int iconDrawablePaddingPx;
     int cellWidthPx;
     int cellHeightPx;
@@ -110,19 +110,19 @@ public class DeviceProfile {
     int allAppsCellWidthPx;
     int allAppsCellHeightPx;
     int allAppsCellPaddingPx;
-    int folderBackgroundOffset;
-    int folderIconSizePx;
+    int folderBackgroundOffset;//文件夹背景
+    int folderIconSizePx;//文件夹图标像素大小
     int folderCellWidthPx;
     int folderCellHeightPx;
-    int hotseatCellWidthPx;
-    int hotseatCellHeightPx;
+    int hotseatCellWidthPx;// 固定热键宽度
+    int hotseatCellHeightPx;// 固定热键高度
     int hotseatIconSizePx;
-    int hotseatBarHeightPx;
+    int hotseatBarHeightPx;// 固定热键上端的分割线
     int hotseatAllAppsRank;
-    int allAppsNumRows;
-    int allAppsNumCols;
-    int searchBarSpaceWidthPx;
-    int searchBarSpaceHeightPx;
+    int allAppsNumRows;// 应用行数
+    int allAppsNumCols;// 应用列数
+    int searchBarSpaceWidthPx;// 搜索条宽度
+    int searchBarSpaceHeightPx;//// 搜索条高度
     int pageIndicatorHeightPx;
     int allAppsButtonVisualSize;
 
@@ -777,7 +777,7 @@ public class DeviceProfile {
             }
         }
 
-        // Layout AllApps
+        // todo Layout AllApps
         AppsCustomizeTabHost host = (AppsCustomizeTabHost)
                 launcher.findViewById(R.id.apps_customize_pane);
         if (host != null) {

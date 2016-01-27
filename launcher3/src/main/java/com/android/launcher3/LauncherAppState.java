@@ -149,6 +149,7 @@ public class LauncherAppState implements DeviceProfile.DeviceProfileCallbacks {
 
     /**
      * Receives notifications whenever the user favorites have changed.
+     * todo Launcher数据都是使用contentprovider来提供数据,注册的监听接口就是mFavoritesObserver
      */
     private final ContentObserver mFavoritesObserver = new ContentObserver(new Handler()) {
         @Override

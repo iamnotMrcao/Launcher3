@@ -30,7 +30,6 @@ import android.content.Intent;
 import android.content.Intent.ShortcutIconResource;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.LauncherApps.Callback;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
@@ -59,6 +58,7 @@ import com.android.launcher3.compat.PackageInstallerCompat;
 import com.android.launcher3.compat.PackageInstallerCompat.PackageInstallInfo;
 import com.android.launcher3.compat.UserHandleCompat;
 import com.android.launcher3.compat.UserManagerCompat;
+import com.android.launcher3.utils.logger.Logger;
 
 import java.lang.ref.WeakReference;
 import java.net.URISyntaxException;
@@ -84,7 +84,7 @@ import java.util.TreeMap;
  */
 public class LauncherModel extends BroadcastReceiver
         implements LauncherAppsCompat.OnAppsChangedCallbackCompat {
-    static final boolean DEBUG_LOADERS = false;
+    static final boolean DEBUG_LOADERS = true;
     private static final boolean DEBUG_RECEIVER = false;
     private static final boolean REMOVE_UNRESTORED_ICONS = true;
     private static final boolean ADD_MANAGED_PROFILE_SHORTCUTS = false;
@@ -188,22 +188,22 @@ public class LauncherModel extends BroadcastReceiver
     private final UserManagerCompat mUserManager;
 
     public interface Callbacks {
-        public boolean setLoadOnResume();
-        public int getCurrentWorkspaceScreen();
-        public void startBinding();
+        public boolean setLoadOnResume();//当Launcher.java类的Activity处于onPause的时候，如果重新恢复，需要调用onResume，此时需要在onResume调用这个接口，恢复Launcher数据。
+        public int getCurrentWorkspaceScreen();//获取屏幕序号
+        public void startBinding();//通知Launcher开始加载数据。清空容器数据，重新加载
         public void bindItems(ArrayList<ItemInfo> shortcuts, int start, int end,
-                              boolean forceAnimateIcons);
+                              boolean forceAnimateIcons);//加载App shortcut、Live Folder、widget到Launcher相关容器。
         public void bindScreens(ArrayList<Long> orderedScreenIds);
         public void bindAddScreens(ArrayList<Long> orderedScreenIds);
         public void bindFolders(HashMap<Long,FolderInfo> folders);
-        public void finishBindingItems(boolean upgradePath);
-        public void bindAppWidget(LauncherAppWidgetInfo info);
-        public void bindAllApplications(ArrayList<AppInfo> apps);
+        public void finishBindingItems(boolean upgradePath);//数据加载完成。
+        public void bindAppWidget(LauncherAppWidgetInfo info);//workspace加载APP 快捷方式
+        public void bindAllApplications(ArrayList<AppInfo> apps);//所有应用列表接着APP图标数据
         public void bindAppsAdded(ArrayList<Long> newScreens,
                                   ArrayList<ItemInfo> addNotAnimated,
                                   ArrayList<ItemInfo> addAnimated,
-                                  ArrayList<AppInfo> addedApps);
-        public void bindAppsUpdated(ArrayList<AppInfo> apps);
+                                  ArrayList<AppInfo> addedApps);//通知Launcher新安装了一个APP，更新数据。
+        public void bindAppsUpdated(ArrayList<AppInfo> apps);//通知Launcher一个APP更新了。（覆盖安装）
         public void bindShortcutsChanged(ArrayList<ShortcutInfo> updated,
                 ArrayList<ShortcutInfo> removed, UserHandleCompat user);
         public void bindWidgetsRestored(ArrayList<LauncherAppWidgetInfo> widgets);
@@ -211,8 +211,8 @@ public class LauncherModel extends BroadcastReceiver
         public void updatePackageBadge(String packageName);
         public void bindComponentsRemoved(ArrayList<String> packageNames,
                         ArrayList<AppInfo> appInfos, UserHandleCompat user, int reason);
-        public void bindPackagesUpdated(ArrayList<Object> widgetsAndShortcuts);
-        public void bindSearchablesChanged();
+        public void bindPackagesUpdated(ArrayList<Object> widgetsAndShortcuts);//多个应用更新。
+        public void bindSearchablesChanged();//Google搜索栏或者删除区域发生变化时通知Launcher
         public boolean isAllAppsButtonRank(int rank);
         public void onPageBoundSynchronously(int page);
         public void dumpLogsToLocalData();
@@ -1081,7 +1081,6 @@ public class LauncherModel extends BroadcastReceiver
     /**
      * Removes the specified items from the database
      * @param context
-     * @param item
      */
     static void deleteItemsFromDatabase(Context context, final ArrayList<? extends ItemInfo> items) {
         final ContentResolver cr = context.getContentResolver();
@@ -1385,7 +1384,7 @@ public class LauncherModel extends BroadcastReceiver
                     mLoaderTask.runBindSynchronousPage(synchronousBindPage);
                 } else {
                     sWorkerThread.setPriority(Thread.NORM_PRIORITY);
-                    sWorker.post(mLoaderTask);
+                    sWorker.post(mLoaderTask);//sWorker是个handler，该处开始加载数据
                 }
             }
         }
@@ -1498,7 +1497,7 @@ public class LauncherModel extends BroadcastReceiver
         private boolean loadAndBindWorkspace() {
             mIsLoadingAndBindingWorkspace = true;
 
-            // Load the workspace
+            // 1. Load the workspace
             if (DEBUG_LOADERS) {
                 Log.d(TAG, "loadAndBindWorkspace mWorkspaceLoaded=" + mWorkspaceLoaded);
             }
@@ -1514,7 +1513,7 @@ public class LauncherModel extends BroadcastReceiver
                 }
             }
 
-            // Bind the workspace
+            // 2. Bind the workspace
             bindWorkspace(-1, isUpgradePath);
             return isUpgradePath;
         }
@@ -1591,6 +1590,7 @@ public class LauncherModel extends BroadcastReceiver
             onlyBindAllApps();
         }
 
+        // TODO: 16-1-25 加载数据的方法
         public void run() {
             boolean isUpgrade = false;
 
@@ -1604,8 +1604,11 @@ public class LauncherModel extends BroadcastReceiver
                 // Elevate priority when Home launches for the first time to avoid
                 // starving at boot time. Staring at a blank home is not cool.
                 synchronized (mLock) {
-                    if (DEBUG_LOADERS) Log.d(TAG, "Setting thread priority to " +
+                    if (DEBUG_LOADERS) Logger.e("Setting thread priority to " +
                             (mIsLaunching ? "DEFAULT" : "BACKGROUND"));
+
+                    //THREAD_PRIORITY_BACKGROUND设置线程优先级为后台，
+                    //这样当多个线程并发后很多无关紧要的线程分配的CPU时间将会减少，有利于主线程的处理
                     android.os.Process.setThreadPriority(mIsLaunching
                             ? Process.THREAD_PRIORITY_DEFAULT : Process.THREAD_PRIORITY_BACKGROUND);
                 }

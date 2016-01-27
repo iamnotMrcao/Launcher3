@@ -457,6 +457,9 @@ public class Launcher extends Activity
             } else {
                 // We only load the page synchronously if the user rotates (or triggers a
                 // configuration change) while launcher is in the foreground
+
+                //todo 很重要，加载界面数据，数据加载总体分为两部分，一部分是加载workspace的数据，另一部分是加载All APP界面的数据。
+                // startLoader主要是启动LoaderTask线程里面的run方法
                 mModel.startLoader(true, mWorkspace.getRestorePage());
             }
         }
