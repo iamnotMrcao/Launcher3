@@ -5,7 +5,7 @@ android {
     buildToolsVersion "23.0.2"
 
     defaultConfig {
-        applicationId "com.android.launcher3"
+        applicationId "com.inst.launcher3"
         minSdkVersion 16
         targetSdkVersion 23
         versionCode 1
