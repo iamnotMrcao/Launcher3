@@ -6,7 +6,6 @@ Launcher3
 * [原始地址](https://android.googlesource.com/platform/packages/apps/Launcher3/)，从[729ad90](https://android.googlesource.com/platform/packages/apps/Launcher3/+/729ad90fb6c1b5c7c6e79507beb00934fbdd44ea)提交开始
 * 最小sdk版本为16
 * Android 5.0 版本及以上可能会出现因为相同权限声明而不能安装的问题
-* 如果你想要可以在Eclipse编译的版本，可以看这个tag: GOODBYE_ECLIPSE
 
 
 ---
